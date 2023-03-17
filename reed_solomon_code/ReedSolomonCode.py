@@ -37,6 +37,8 @@ class ReedSolomonCode:
                 13,  # alpha 13
                 9,  # alpha 14
             ]
+        else:
+            raise Exception('Unsupported bits mode - {}'.format(self.__m))
 
     def __reed_solomon_generator(self):
         sub_polynomial_numbers = 2 * self.__t
