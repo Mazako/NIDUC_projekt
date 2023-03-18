@@ -57,7 +57,7 @@ class ReedSolomonCode:
             total_word = ''
             words -= 1
             missing_message_end_len = len(message) - (words * max_bits_per_word)
-            total_word += self.__encode_message(message[0:missing_message_end_len])
+            total_word += self.__encode_message(self.__add_missing_zeros(message[0:missing_message_end_len]))
             k = missing_message_end_len
             for i in range(words):
                 total_word += self.__encode_message(message[k:k + max_bits_per_word])
