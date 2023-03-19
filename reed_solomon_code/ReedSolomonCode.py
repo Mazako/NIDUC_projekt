@@ -67,6 +67,8 @@ class ReedSolomonCode:
     def __generate_table(self):
         if self.__m == 4:
             self.__table = get_gf_16()
+        elif self.__m == 8:
+            self.__table = get_gf_256()
         else:
             raise Exception('Unsupported bits mode - {}'.format(self.__m))
 
@@ -84,7 +86,7 @@ class ReedSolomonCode:
             return 0
         gf_x = self.__table.index(x)
         gf_y = self.__table.index(y)
-        return self.__table[(gf_x + gf_y) % 15]
+        return self.__table[(gf_x + gf_y) % (2 ** self.__m - 1)]
 
     def __multiply_poly_galois(self, a, b):
         a_len = len(a)
@@ -103,7 +105,7 @@ class ReedSolomonCode:
         print('parity: ', parity_check)
         poly_encoded = message_polynomial + parity_check
         print('polynomial mesage:', poly_encoded)
-        return message + ReedSolomonCode.array_to_binary(parity_check)
+        return ReedSolomonCode.remove_leading_zeros(message + ReedSolomonCode.array_to_binary(parity_check))
 
     def __get_message_polynomial(self, message):
         galois_polynomial = []
