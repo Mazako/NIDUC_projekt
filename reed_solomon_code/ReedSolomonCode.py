@@ -79,7 +79,7 @@ class ReedSolomonCode:
             generator = self.__multiply_poly_galois(generator, [1, self.__table[i]])
         self.__generator = generator
 
-    def __multiply_galois_16(self, x, y):
+    def __multiply_galois(self, x, y):
         x = int(x)
         y = int(y)
         if x == 0 or y == 0:
@@ -94,7 +94,7 @@ class ReedSolomonCode:
         solution = [0] * (a_len + b_len - 1)
         for i in range(a_len):
             for j in range(b_len):
-                solution[i + j] = ReedSolomonCode.add_galois(solution[i + j], self.__multiply_galois_16(a[i], b[j]))
+                solution[i + j] = ReedSolomonCode.add_galois(solution[i + j], self.__multiply_galois(a[i], b[j]))
         return solution
 
     def __encode_message(self, message):
@@ -136,7 +136,7 @@ class ReedSolomonCode:
             if coef != 0:
                 for j in range(1, len(divisor)):
                     if divisor[j] != 0:
-                        result[i + j] = ReedSolomonCode.add_galois(result[i + j], self.__multiply_galois_16(divisor[j], coef))
+                        result[i + j] = ReedSolomonCode.add_galois(result[i + j], self.__multiply_galois(divisor[j], coef))
 
         separator = -(len(divisor) - 1)
         return result[:separator], result[separator:]
