@@ -63,6 +63,11 @@ class ReedSolomonCode:
                 total_word += self.__encode_message(message[k:k + max_bits_per_word])
                 k += max_bits_per_word
             return total_word
+    def decode_number(self, message):
+        max_bits_per_word = self.__m * self.__k
+        if len(message) < max_bits_per_word:
+            message = '0' * (max_bits_per_word - len(message)) + message
+        self.__decode_message(message)
 
     def __generate_table(self):
         if self.__m == 4:
@@ -107,6 +112,13 @@ class ReedSolomonCode:
         print('polynomial mesage:', poly_encoded)
         return ReedSolomonCode.remove_leading_zeros(message + ReedSolomonCode.array_to_binary(parity_check))
 
+    def __decode_message(self, message):
+        polynomial = self.__get_message_polynomial(message)
+        polynomial[0] = 10
+        syndromes = self.__calculate_syndrome_components(polynomial)
+        print(polynomial)
+        print(syndromes)
+
     def __get_message_polynomial(self, message):
         galois_polynomial = []
         offset = self.__m
@@ -140,3 +152,22 @@ class ReedSolomonCode:
 
         separator = -(len(divisor) - 1)
         return result[:separator], result[separator:]
+
+    def __calculate_polynomial(self, polynomial, value):
+        total = polynomial[len(polynomial) - 1]
+        for i in range(1, len(polynomial)):
+            poly_index = len(polynomial) - i - 1
+            total = self.add_galois(total, self.__multiply_galois(polynomial[poly_index], self.__galois_pow(value, i)))
+        return total
+
+    def __galois_pow(self, value, i):
+        if i == 0:
+            return 1
+        value = (self.__table.index(value) * i) % (2 ** self.__m - 1)
+        return self.__table[value]
+
+    def __calculate_syndrome_components(self, polynomial):
+        syndromes = []
+        for i in range(1, 2 * self.__t + 1):
+            syndromes.append(self.__calculate_polynomial(polynomial, self.__table[i]))
+        return syndromes
