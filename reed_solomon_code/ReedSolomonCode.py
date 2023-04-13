@@ -10,11 +10,12 @@ from reed_solomon_code.GaloisFields import *
 # __k - message size in symbols
 # __table - table of galois field (16 or 256)
 # __generator - generator of code message
+
+
 class ReedSolomonCode:
     @staticmethod
     def add_galois(x, y):
         return x ^ y
-
     @staticmethod
     def remove_leading_zeros(message):
         i = 0
@@ -49,9 +50,9 @@ class ReedSolomonCode:
     def encode_number(self, message):
         max_bits_per_word = self.__m * self.__k
         if len(message) == max_bits_per_word:
-            return self.__encode_message(message)
+            return self.remove_leading_zeros(self.__encode_message(message))
         elif len(message) < max_bits_per_word:
-            return self.__encode_message(self.__add_missing_zeros(message))
+            return self.remove_leading_zeros(self.__encode_message(self.__add_missing_zeros(message)))
         else:
             words = math.ceil(len(message) / max_bits_per_word)
             total_word = ''
@@ -62,13 +63,15 @@ class ReedSolomonCode:
             for i in range(words):
                 total_word += self.__encode_message(message[k:k + max_bits_per_word])
                 k += max_bits_per_word
-            return total_word
+            return self.remove_leading_zeros(total_word)
 
     def decode_number(self, message):
-        max_bits_per_word = self.__m * self.__k
+        max_bits_per_word = (self.__m * self.__k) + (self.__t * 2 * self.__m)
         if len(message) < max_bits_per_word:
             message = '0' * (max_bits_per_word - len(message)) + message
-        self.__decode_message(message)
+            return self.remove_leading_zeros(self.__decode_message(message))
+        elif len(message == max_bits_per_word):
+            return self.remove_leading_zeros(self.decode_number(message))
 
     def __generate_table(self):
         if self.__m == 4:
@@ -105,17 +108,16 @@ class ReedSolomonCode:
 
     def __encode_message(self, message):
         print('message:', message)
-        message_polynomial = self.__get_message_polynomial(message)
+        message_polynomial = self.__get_message_polynomial(message, True)
         print('message in polynomial', message_polynomial)
         parity_check = self.__calculate_pairity_check(message_polynomial)
         print('parity: ', parity_check)
         poly_encoded = message_polynomial + parity_check
         print('polynomial mesage:', poly_encoded)
-        return ReedSolomonCode.remove_leading_zeros(message + ReedSolomonCode.array_to_binary(parity_check))
+        return message + ReedSolomonCode.array_to_binary(parity_check)
 
     def __decode_message(self, message):
-        polynomial = self.__get_message_polynomial(message)
-        polynomial[0] = 10
+        polynomial = self.__get_message_polynomial(message, False)
         syndromes = self.__calculate_syndrome_components(polynomial)
         print('Polynomial: ', polynomial)
         print('Syndromes: ', syndromes)
@@ -125,20 +127,33 @@ class ReedSolomonCode:
         print('magnitude ', magnitude)
         error_locations = self.__chein_search(error_locator_polynomial)
         print('roots: ', error_locations)
+        error_values = self.__forney_algorithm(magnitude, error_locator_polynomial, error_locations)
+        print('error values: ', error_values)
+        error_indexes = list(map(lambda x: self.__table.index(self.__inverse_galois(x)), error_locations))
+        print('error indexes: ', error_indexes)
+        self.__repair_message(polynomial, error_values, error_indexes)
+        print('repaired message: ', polynomial)
+        message_length = len(polynomial) - 2 * self.__t
+        return self.array_to_binary(polynomial[:message_length])
 
 
-
-    def __get_message_polynomial(self, message):
+    def __get_message_polynomial(self, message, encoding):
         galois_polynomial = []
         offset = self.__m
+        if encoding:
+            limit = self.__k
+        else:
+            limit = self.__n
         k = 0
-        for i in range(self.__k):
+        for i in range(limit):
             galois_polynomial.append(int(''.join(message[k: k + offset]), 2))
             k += self.__m
         i = 0
         while i < len(galois_polynomial) and galois_polynomial[i] == 0:
             i += 1
         return galois_polynomial[i:]
+
+
 
     def __add_missing_zeros(self, message):
         return '0' * ((self.__k * self.__m) - len(message)) + message
@@ -223,6 +238,8 @@ class ReedSolomonCode:
         return total
 
     def __inverse_galois(self, x):
+        if x == 1:
+            return 1
         alpha = self.__table.index(x)
         return self.__table[((2 ** self.__m - 1) - alpha)]
 
@@ -242,4 +259,38 @@ class ReedSolomonCode:
         return roots
 
     def __forney_algorithm(self, error_magnitude, error_locator, roots):
-        pass
+        """
+        :param error_magnitude:
+        :param error_locator:
+        :param roots:
+        :return: co ty kruwa mi tu piszae3cxz dziwmo
+
+        because our FCR == 1, we use simplified wzór because Xj^1-b == X^0 == 1
+        """
+        Y = []
+        for x in roots:
+            magnitude = self.__calculate_polynomial(error_magnitude, x)
+            d_x_locator = self.__delta_derivative(error_locator, x)
+            y = self.__multiply_galois(magnitude, self.__inverse_galois(d_x_locator))
+            Y.append(y)
+        return Y
+
+    def __delta_derivative(self, error_locator, x):
+        """
+        Brand new kurwa model ---> delta[1] + delta[3] x x^-2 + delta[5] x x^-4 + ...
+        """
+        error_locator_reversed = error_locator.copy()
+        error_locator_reversed.reverse()
+        total = error_locator_reversed[1]
+        power = -2
+        for i in range(3, len(error_locator_reversed)):
+            if i % 2 != 0:
+                new_power = (2 ** self.__m - 1) + power
+                total = self.add_galois(total, self.__multiply_galois(error_locator_reversed[i], self.__galois_pow(x, new_power)))
+                power -= 2
+        return total
+
+    def __repair_message(self, polynomial, error_values, error_indexes):
+        for i in range(len(error_values)):
+            index = len(polynomial) - error_indexes[i] - 1
+            polynomial[index] = self.add_galois(polynomial[index], error_values[i])
