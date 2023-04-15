@@ -16,6 +16,7 @@ class ReedSolomonCode:
     @staticmethod
     def add_galois(x, y):
         return x ^ y
+
     @staticmethod
     def remove_leading_zeros(message):
         i = 0
@@ -52,13 +53,13 @@ class ReedSolomonCode:
         if len(message) == max_bits_per_word:
             return self.remove_leading_zeros(self.__encode_message(message))
         elif len(message) < max_bits_per_word:
-            return self.remove_leading_zeros(self.__encode_message(self.__add_missing_zeros(message)))
+            return self.remove_leading_zeros(self.__encode_message(self.__add_missing_zeros(message, True)))
         else:
             words = math.ceil(len(message) / max_bits_per_word)
             total_word = ''
             words -= 1
             missing_message_end_len = len(message) - (words * max_bits_per_word)
-            total_word += self.__encode_message(self.__add_missing_zeros(message[0:missing_message_end_len]))
+            total_word += self.__encode_message(self.__add_missing_zeros(message[0:missing_message_end_len], True))
             k = missing_message_end_len
             for i in range(words):
                 total_word += self.__encode_message(message[k:k + max_bits_per_word])
@@ -70,8 +71,19 @@ class ReedSolomonCode:
         if len(message) < max_bits_per_word:
             message = '0' * (max_bits_per_word - len(message)) + message
             return self.remove_leading_zeros(self.__decode_message(message))
-        elif len(message == max_bits_per_word):
+        elif len(message) == max_bits_per_word:
             return self.remove_leading_zeros(self.decode_number(message))
+        else:
+            words = math.ceil(len(message) / max_bits_per_word)
+            total_word = ''
+            words -= 1
+            missing_message_end_len = len(message) - (words * max_bits_per_word)
+            total_word += self.__decode_message(self.__add_missing_zeros(message[0:missing_message_end_len], False))
+            k = missing_message_end_len
+            for i in range(words):
+                total_word += self.__decode_message(message[k:k + max_bits_per_word])
+                k += max_bits_per_word
+            return self.remove_leading_zeros(total_word)
 
     def __generate_table(self):
         if self.__m == 4:
@@ -136,7 +148,6 @@ class ReedSolomonCode:
         message_length = len(polynomial) - 2 * self.__t
         return self.array_to_binary(polynomial[:message_length])
 
-
     def __get_message_polynomial(self, message, encoding):
         galois_polynomial = []
         offset = self.__m
@@ -153,10 +164,11 @@ class ReedSolomonCode:
             i += 1
         return galois_polynomial[i:]
 
-
-
-    def __add_missing_zeros(self, message):
-        return '0' * ((self.__k * self.__m) - len(message)) + message
+    def __add_missing_zeros(self, message, encoding):
+        if encoding:
+            return '0' * ((self.__k * self.__m) - len(message)) + message
+        else:
+            return '0' * ((self.__k * self.__m) + (self.__t * 2 * self.__m) - len(message)) + message
 
     def __calculate_pairity_check(self, message):
         x_2_t = [0] * (self.__t * 2 + 1)
@@ -286,7 +298,8 @@ class ReedSolomonCode:
         for i in range(3, len(error_locator_reversed)):
             if i % 2 != 0:
                 new_power = (2 ** self.__m - 1) + power
-                total = self.add_galois(total, self.__multiply_galois(error_locator_reversed[i], self.__galois_pow(x, new_power)))
+                total = self.add_galois(total, self.__multiply_galois(error_locator_reversed[i],
+                                                                      self.__galois_pow(x, new_power)))
                 power -= 2
         return total
 
