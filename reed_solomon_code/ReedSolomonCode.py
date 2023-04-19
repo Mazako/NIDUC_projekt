@@ -75,7 +75,7 @@ class ReedSolomonCode:
             message = '0' * (max_bits_per_word - len(message)) + message
             return self.remove_leading_zeros(self.__decode_message(message))
         elif len(message) == max_bits_per_word:
-            return self.remove_leading_zeros(self.decode_number(message))
+            return self.remove_leading_zeros(self.__decode_message(message))
         else:
             words = math.ceil(len(message) / max_bits_per_word)
             total_word = ''
@@ -274,14 +274,6 @@ class ReedSolomonCode:
         return roots
 
     def __forney_algorithm(self, error_magnitude, error_locator, roots):
-        """
-        :param error_magnitude:
-        :param error_locator:
-        :param roots:
-        :return: co ty kruwa mi tu piszae3cxz dziwmo
-
-        because our FCR == 1, we use simplified wzór because Xj^1-b == X^0 == 1
-        """
         Y = []
         for x in roots:
             magnitude = self.__calculate_polynomial(error_magnitude, x)
@@ -307,6 +299,7 @@ class ReedSolomonCode:
         return total
 
     def __repair_message(self, polynomial, error_values, error_indexes):
+        #TODO: to nie dziala jak indeks jest wiekszy niz wielomian
         for i in range(len(error_values)):
             index = len(polynomial) - error_indexes[i] - 1
             polynomial[index] = self.add_galois(polynomial[index], error_values[i])
