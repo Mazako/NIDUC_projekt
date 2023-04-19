@@ -27,10 +27,13 @@ class ReedSolomonCode:
         return message[i:]
 
     @staticmethod
-    def array_to_binary(array):
+    def array_to_binary(array, offset):
         result = ''
         for element in array:
-            result += '{0:04b}'.format(element)
+            if offset == 4:
+                result += '{0:04b}'.format(element)
+            else:
+                result += '{0:08b}'.format(element)
         return result
 
     def __init__(self, bits_mode, correctable_symbols):
@@ -126,7 +129,7 @@ class ReedSolomonCode:
         print('parity: ', parity_check)
         poly_encoded = message_polynomial + parity_check
         print('polynomial mesage:', poly_encoded)
-        return message + ReedSolomonCode.array_to_binary(parity_check)
+        return message + ReedSolomonCode.array_to_binary(parity_check, self.__m)
 
     def __decode_message(self, message):
         polynomial = self.__get_message_polynomial(message, False)
@@ -146,7 +149,7 @@ class ReedSolomonCode:
         self.__repair_message(polynomial, error_values, error_indexes)
         print('repaired message: ', polynomial)
         message_length = len(polynomial) - 2 * self.__t
-        return self.array_to_binary(polynomial[:message_length])
+        return self.array_to_binary(polynomial[:message_length], self.__m)
 
     def __get_message_polynomial(self, message, encoding):
         galois_polynomial = []
