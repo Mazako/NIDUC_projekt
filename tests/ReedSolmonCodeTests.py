@@ -30,5 +30,16 @@ class ReedSolomonCodeTests(unittest.TestCase):
             100, 183, 252, 104, 93, 19, 163, 137, 160]
         )
 
+    def test_solomon_4_2(self):
+        for i in range(1000):
+            solomon = ReedSolomonCode(4, 2)
+            message = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+            message_string = ReedSolomonCode.remove_leading_zeros(ReedSolomonCode.array_to_binary(message, 4))
+            encoded_message = solomon.encode_number(message_string)
+            encoded_message_with_errors = solomon.add_errors_string(2, encoded_message, is_parity=False)
+            decoded_number = solomon.decode_number(encoded_message_with_errors)
+            self.assertEqual(message_string, decoded_number)
+
+
 if __name__ == '__main__':
     unittest.main()

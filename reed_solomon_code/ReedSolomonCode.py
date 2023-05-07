@@ -301,7 +301,7 @@ class ReedSolomonCode:
 
     def __repair_message(self, polynomial, error_values, error_indexes):
         # TODO: to nie dziala jak indeks jest wiekszy niz wielomian
-        if max(error_indexes) < len(polynomial) - 1:
+        if max(error_indexes) < len(polynomial):
             for i in range(len(error_values)):
                 index = len(polynomial) - error_indexes[i] - 1
                 polynomial[index] = self.add_galois(polynomial[index], error_values[i])
@@ -315,19 +315,29 @@ class ReedSolomonCode:
             przyjmuje ze od lewej patrzac najpierw jest n-k=2t bajtow pairity i potem k bajtow data.
             bajty mnoze przez 8 i lece po tablicy to samo dla add_parity_errors
         """
+        pairity_count = 2 * self.__t
+        message_count = len(message) - 2 * self.__t
+        if (is_parity and pairity_count < error_number) or (not is_parity and message_count < error_number):
+            raise Exception('Too much error number to correct')
         error_indexes = []
         error_counter = 0
-        if int(error_number) <= int(self.__t):
-            while error_counter <= error_number:
-                if is_parity:
-                    index = random.randint(self.__k, self.__n - 1)
-                else:
-                    index = random.randint(0, self.__k - 1)
-                if index not in error_indexes:
-                    symbol = random.randint(0, 2 ** self.__m - 1)
-                    if symbol == message[index]:
-                        continue
-                    message[index] = symbol
-                    error_indexes.append(index)
-                    error_counter += 1
-            return message
+        while error_counter < error_number:
+            if is_parity:
+                index = random.randint(len(message) - 2 * self.__t, len(message) - 1)
+            else:
+                index = random.randint(0, len(message) - 2 * self.__t - 1)
+            if index not in error_indexes:
+                symbol = random.randint(1, 2 ** self.__m - 1)
+                if symbol == message[index]:
+                    continue
+                message[index] = symbol
+                error_indexes.append(index)
+                error_counter += 1
+        return message
+
+    def add_errors_string(self, error_number, message, is_parity):
+        message = self.add_missing_zeros(message, encoding=False)
+        array = self.get_message_polynomial(message, encoding=False)
+        array =  self.add_errors(error_number, array, is_parity)
+        return self.array_to_binary(array, self.__m)
+
