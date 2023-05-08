@@ -55,9 +55,9 @@ class ReedSolomonCode:
     def encode_number(self, message):
         max_bits_per_word = self.__m * self.__k
         if len(message) == max_bits_per_word:
-            return self.remove_leading_zeros(self.__encode_message(message))
+            return self.__encode_message(message)
         elif len(message) < max_bits_per_word:
-            return self.remove_leading_zeros(self.__encode_message(self.add_missing_zeros(message, True)))
+            return self.__encode_message(self.add_missing_zeros(message, True))
         else:
             words = math.ceil(len(message) / max_bits_per_word)
             total_word = ''
@@ -68,7 +68,7 @@ class ReedSolomonCode:
             for i in range(words):
                 total_word += self.__encode_message(message[k:k + max_bits_per_word])
                 k += max_bits_per_word
-            return self.remove_leading_zeros(total_word)
+            return total_word
 
     def decode_number(self, message):
         max_bits_per_word = (self.__m * self.__k) + (self.__t * 2 * self.__m)
