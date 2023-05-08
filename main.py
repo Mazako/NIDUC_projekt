@@ -1,33 +1,18 @@
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
-tab4 = [1, 2, 3, 4, 5]
-tab8 = [2, 8, 13, 22]
+solomon = ReedSolomonCode(4, 3)
+message = [1, 2, 3, 4, 6, 7, 8, 9]
+string = ReedSolomonCode.array_to_binary(message, 4)
+string = ReedSolomonCode.remove_leading_zeros(string)
+encoded_message = solomon.encode_number(string)
+encoded_message_array = ReedSolomonCode.binary_to_array(encoded_message, 4)
+encoded_message_array[0] = 4
+encoded_message_array[1] = 4
+encoded_message_array[2] = 4
+decoded = solomon.decode_number(ReedSolomonCode.array_to_binary(encoded_message_array, 4))
+print(string == decoded)
 
-for i in tab4:
-    for j in range(1, i):
-        solomon = ReedSolomonCode(4, i-1)
-        solomon.print_general_info()
-        message = solomon.encode_number(ReedSolomonCode.array_to_binary([7, 4, 0, 5, 15, 9, 6, 15, 5, 10], 4))
-        print(message)
-        message = solomon.add_missing_zeros(message, False)
-        poly = solomon.get_message_polynomial(message, False)
-        print(poly)
-        print(solomon.add_errors(2, poly, is_parity=True))
-        print()
 
-for i in tab8:
-    for j in range(1, i-1):
-        solomon = ReedSolomonCode(8, i)
-        solomon.print_general_info()
-        message = solomon.encode_number(ReedSolomonCode.array_to_binary(
-            [7, 4, 0, 5, 15, 9, 6, 15, 5, 10, 5, 24, 6, 7, 12, 8, 3, 5, 8, 5, 2, 35, 6, 7, 1, 8, 0, 56, 2, 34, 6, 4, 26,
-             7, 3, 4, 7, 5, 2, 1, 6, 5, 5, 3, 6], 8))
-        print(message)
-        message = solomon.add_missing_zeros(message, False)
-        poly = solomon.get_message_polynomial(message, False)
-        print(poly)
-        print(solomon.add_errors(7, poly, is_parity=True))
-        print()
 
 """
 RS(4, 1)

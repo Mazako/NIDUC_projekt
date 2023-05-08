@@ -28,6 +28,15 @@ class ReedSolomonCode:
         return message[i:]
 
     @staticmethod
+    def remove_leading_zeros_array(message):
+        i = 0
+        while i < len(message) and message[i] == 0:
+            i += 1
+        if i == len(message):
+            return 0
+        return message[i:]
+
+    @staticmethod
     def array_to_binary(array, offset):
         result = ''
         for element in array:
@@ -37,11 +46,20 @@ class ReedSolomonCode:
                 result += '{0:08b}'.format(element)
         return result
 
+    @staticmethod
+    def binary_to_array(string, offset):
+        result = []
+        i = 0
+        while i < len(string):
+            result.append(int(string[i:i+offset], 2))
+            i += 4
+        return ReedSolomonCode.remove_leading_zeros_array(result)
+
     def __init__(self, bits_mode, correctable_symbols):
         self.__m = bits_mode
         self.__t = correctable_symbols
         self.__n = pow(2, self.__m) - 1
-        self.__k = self.__n - 2 * self.__t
+        self.__k = self.__n - (2 * self.__t)
         self.__generate_table()
         self.__reed_solomon_generator()
 
@@ -123,32 +141,35 @@ class ReedSolomonCode:
         return solution
 
     def __encode_message(self, message):
-        print('message:', message)
+        # print('message:', message)
         message_polynomial = self.get_message_polynomial(message, True)
-        print('message in polynomial', message_polynomial)
+        # print('message in polynomial', message_polynomial)
         parity_check = self.__calculate_pairity_check(message_polynomial)
-        print('parity: ', parity_check)
+        # print('parity: ', parity_check)
         poly_encoded = message_polynomial + parity_check
-        print('polynomial mesage:', poly_encoded)
+        # print('polynomial mesage:', poly_encoded)
         return message + ReedSolomonCode.array_to_binary(parity_check, self.__m)
 
     def __decode_message(self, message):
         polynomial = self.get_message_polynomial(message, False)
         syndromes = self.__calculate_syndrome_components(polynomial)
-        print('Polynomial: ', polynomial)
-        print('Syndromes: ', syndromes)
+        # print('Polynomial: ', polynomial)
+        # print('Syndromes: ', syndromes)
         error_locator_polynomial = self.__berlekamps_massey(syndromes)
-        print('delta: ', error_locator_polynomial)
+        # print('delta: ', error_locator_polynomial)
         magnitude = self.__calculate_error_magnitude(syndromes, error_locator_polynomial)
-        print('magnitude ', magnitude)
+        magnitude = ReedSolomonCode.remove_leading_zeros_array(magnitude)
+        # print('magnitude ', magnitude)
+
         error_locations = self.__chein_search(error_locator_polynomial)
-        print('roots: ', error_locations)
+        # print('roots: ', error_locations)
         error_values = self.__forney_algorithm(magnitude, error_locator_polynomial, error_locations)
-        print('error values: ', error_values)
+        # print('error values: ', error_values)
         error_indexes = list(map(lambda x: self.__table.index(self.__inverse_galois(x)), error_locations))
-        print('error indexes: ', error_indexes)
-        self.__repair_message(polynomial, error_values, error_indexes)
-        print('repaired message: ', polynomial)
+        # print('error indexes: ', error_indexes)
+        if error_indexes:
+            self.__repair_message(polynomial, error_values, error_indexes)
+        # print('repaired message: ', polynomial)
         message_length = len(polynomial) - 2 * self.__t
         return self.array_to_binary(polynomial[:message_length], self.__m)
 
@@ -254,6 +275,8 @@ class ReedSolomonCode:
         return total
 
     def __inverse_galois(self, x):
+        if x == 0:
+            return 0
         if x == 1:
             return 1
         alpha = self.__table.index(x)
@@ -290,13 +313,12 @@ class ReedSolomonCode:
         error_locator_reversed = error_locator.copy()
         error_locator_reversed.reverse()
         total = error_locator_reversed[1]
-        power = -2
+        power = 2
         for i in range(3, len(error_locator_reversed)):
             if i % 2 != 0:
-                new_power = (2 ** self.__m - 1) + power
                 total = self.add_galois(total, self.__multiply_galois(error_locator_reversed[i],
-                                                                      self.__galois_pow(x, new_power)))
-                power -= 2
+                                                                      self.__galois_pow(x, power)))
+                power += 2
         return total
 
     def __repair_message(self, polynomial, error_values, error_indexes):
@@ -308,7 +330,6 @@ class ReedSolomonCode:
         else:
             raise Exception('chuj')
 
-
     def add_errors(self, error_number, message, is_parity):
         """
             przyjmuje ze message jest tablicą juz zamienioną na bity
@@ -317,15 +338,18 @@ class ReedSolomonCode:
         """
         pairity_count = 2 * self.__t
         message_count = len(message) - 2 * self.__t
-        if (is_parity and pairity_count < error_number) or (not is_parity and message_count < error_number):
-            raise Exception('Too much error number to correct')
+        if is_parity and pairity_count < error_number:
+            error_number %= pairity_count
+        if not is_parity and message_count < error_number:
+            error_number %= message_count
+
         error_indexes = []
         error_counter = 0
         while error_counter < error_number:
             if is_parity:
                 index = random.randint(len(message) - 2 * self.__t, len(message) - 1)
             else:
-                index = random.randint(0, len(message) - 2 * self.__t - 1)
+                index = random.randint(0, len(message) - 2 * self.__t)
             if index not in error_indexes:
                 symbol = random.randint(1, 2 ** self.__m - 1)
                 if symbol == message[index]:
@@ -336,8 +360,26 @@ class ReedSolomonCode:
         return message
 
     def add_errors_string(self, error_number, message, is_parity):
+        max_bits_per_word = (self.__m * self.__k) + (self.__t * 2 * self.__m)
+        if len(message) > max_bits_per_word:
+            words = math.ceil(len(message) / max_bits_per_word)
+            total_word = ''
+            words -= 1
+            missing_message_end_len = len(message) - (words * max_bits_per_word)
+            word = self.add_errors(error_number,
+                                   self.get_message_polynomial(
+                                       self.add_missing_zeros(message[0:missing_message_end_len], False),
+                                       encoding=False),
+                                   is_parity)
+            total_word += self.array_to_binary(word, self.__m)
+            k = missing_message_end_len
+            for i in range(words):
+                word = self.add_errors(error_number, self.get_message_polynomial(
+                    self.add_missing_zeros(message[k:k + max_bits_per_word], False), encoding=False), is_parity)
+                total_word += self.array_to_binary(word, self.__m)
+                k += max_bits_per_word
+            return self.remove_leading_zeros(total_word)
         message = self.add_missing_zeros(message, encoding=False)
         array = self.get_message_polynomial(message, encoding=False)
-        array =  self.add_errors(error_number, array, is_parity)
+        array = self.add_errors(error_number, array, is_parity)
         return self.array_to_binary(array, self.__m)
-
