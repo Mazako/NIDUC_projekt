@@ -11,18 +11,3 @@ encoded_message_array[1] = 4
 encoded_message_array[2] = 4
 decoded = solomon.decode_number(ReedSolomonCode.array_to_binary(encoded_message_array, 4))
 print(string == decoded)
-
-
-
-"""
-RS(4, 1)
-RS(4, 2)
-RS(4, 3)
-RS(4, 4)
-RS(4, 5)
-
-RS(8, 2)
-RS(8, 8)
-RS(8, 12)
-RS(8, 22)
-"""
