@@ -1,7 +1,6 @@
 import unittest
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
-
 class ReedSolomonCodeTests(unittest.TestCase):
 
     def test_generator_function_16(self):
@@ -33,7 +32,8 @@ class ReedSolomonCodeTests(unittest.TestCase):
     def test_solomon_4_2(self):
         for i in range(1000):
             solomon = ReedSolomonCode(4, 2)
-            message = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
+
+            message = [7, 4, 0, 5, 15, 9, 6, 15, 5, 10]
             message_string = ReedSolomonCode.remove_leading_zeros(ReedSolomonCode.array_to_binary(message, 4))
             encoded_message = solomon.encode_number(message_string)
             encoded_message_with_errors = solomon.add_errors_string(2, encoded_message, is_parity=False)
