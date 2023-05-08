@@ -1,5 +1,6 @@
 import random
 import unittest
+
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
 
@@ -221,7 +222,6 @@ class ReedSolomonCodeTests(unittest.TestCase):
             encoded_message_with_errors = solomon.add_errors_string(22, encoded_message, is_parity=True)
             decoded_number = solomon.decode_number(encoded_message_with_errors)
             self.assertEqual(message_string, decoded_number)
-
 
 
 if __name__ == '__main__':

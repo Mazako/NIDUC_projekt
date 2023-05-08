@@ -51,7 +51,7 @@ class ReedSolomonCode:
         result = []
         i = 0
         while i < len(string):
-            result.append(int(string[i:i+offset], 2))
+            result.append(int(string[i:i + offset], 2))
             i += 4
         return ReedSolomonCode.remove_leading_zeros_array(result)
 
