@@ -4,9 +4,10 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
     :type solomon: ReedSolomonCode
     """
     correct_probes = 0
-    for i in range(1):
+    decoded_but_good = 0
+    count = 5000
+    for i in range(count):
         rand_message = ReedSolomonCode.generate_random_message(solomon.k, solomon.m)
-        print('REAL_MESSAGE', rand_message)
         message = ReedSolomonCode.array_to_binary(rand_message, solomon.m)
         encoded_message = solomon.encode_number(message)
         mesage_with_errors = solomon.add_errors_string(poly_errors, encoded_message, is_parity=False)
@@ -15,9 +16,12 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
             decoded_message = solomon.decode_number(mesage_with_errors)
             if decoded_message == ReedSolomonCode.remove_leading_zeros(message):
                 correct_probes += 1
+            else:
+                decoded_but_good += 1
+
         except:
             continue
-    return correct_probes / 1000
+    return correct_probes / count, decoded_but_good / count
 
 
 # solomon = ReedSolomonCode(4, 3)
@@ -36,5 +40,5 @@ from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
 
 solomon = ReedSolomonCode(4, 3)
-x = rs_stat_test(solomon, 0, 4)
+x = rs_stat_test(solomon, 9, 6)
 print(x)

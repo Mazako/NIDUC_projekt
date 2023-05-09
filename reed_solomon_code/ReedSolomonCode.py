@@ -163,24 +163,34 @@ class ReedSolomonCode:
     def __decode_message(self, message):
         polynomial = self.get_message_polynomial(message, False)
         syndromes = self.__calculate_syndrome_components(polynomial)
-        print('Polynomial: ', polynomial)
-        print('Syndromes: ', syndromes)
+        # print('Polynomial: ', polynomial)
+        # print('Syndromes: ', syndromes)
+        if sum(syndromes) == 0:
+            return self.array_to_binary(polynomial[:len(polynomial) - 2 * self.t], self.m)
         error_locator_polynomial = self.__berlekamps_massey(syndromes)
-        print('delta: ', error_locator_polynomial)
+        # print('delta: ', error_locator_polynomial)
         magnitude = self.__calculate_error_magnitude(syndromes, error_locator_polynomial)
         magnitude = ReedSolomonCode.remove_leading_zeros_array(magnitude)
-        print('magnitude ', magnitude)
+        # print('magnitude ', magnitude)
 
         error_locations = self.__chein_search(error_locator_polynomial)
-        print('roots: ', error_locations)
+        # print('roots: ', error_locations)
+        if len(error_locations) != len(error_locator_polynomial) - 1:
+            raise Exception
+        if len(error_locations) > self.t:
+            raise Exception
+
         error_values = self.__forney_algorithm(magnitude, error_locator_polynomial, error_locations)
-        print('error values: ', error_values)
+        # print('error values: ', error_values)
         error_indexes = list(map(lambda x: self.__table.index(self.__inverse_galois(x)), error_locations))
-        print('error indexes: ', error_indexes)
-        if error_indexes:
-            self.__repair_message(polynomial, error_values, error_indexes)
-        print('repaired message: ', polynomial)
+        # print('error indexes: ', error_indexes)
+        self.__repair_message(polynomial, error_values, error_indexes)
+        # print('repaired message: ', polynomial)
+        # print(self.__calculate_syndrome_components(polynomial))
+        if sum(self.__calculate_syndrome_components(polynomial)) > 0:
+            raise Exception
         message_length = len(polynomial) - 2 * self.t
+        # print('SUCCESS')
         return self.array_to_binary(polynomial[:message_length], self.m)
 
     def get_message_polynomial(self, message, encoding):
@@ -334,7 +344,6 @@ class ReedSolomonCode:
         return total
 
     def __repair_message(self, polynomial, error_values, error_indexes):
-        # TODO: to nie dziala jak indeks jest wiekszy niz wielomian
         if max(error_indexes) < len(polynomial):
             for i in range(len(error_values)):
                 index = len(polynomial) - error_indexes[i] - 1
@@ -356,9 +365,9 @@ class ReedSolomonCode:
         error_counter = 0
         while error_counter < error_number:
             if is_parity:
-                index = random.randint(len(message) - 2 * self.t, len(message) - 1)
+                index = random.randint(len(message) - (2 * self.t), len(message) - 1)
             else:
-                index = random.randint(0, len(message) - 2 * self.t)
+                index = random.randint(0, len(message) - (2 * self.t) - 1)
             if index not in error_indexes:
                 symbol = random.randint(1, 2 ** self.m - 1)
                 if symbol == message[index]:
