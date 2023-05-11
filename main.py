@@ -40,5 +40,5 @@ from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
 
 solomon = ReedSolomonCode(4, 3)
-x = rs_stat_test(solomon, 9, 6)
+x = rs_stat_test(solomon, 4, 0)
 print(x)
