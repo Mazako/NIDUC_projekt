@@ -5,8 +5,9 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
     """
     correct_probes = 0
     decoded_but_good = 0
-    count = 5000
+    count = 500
     for i in range(count):
+        print(i)
         rand_message = ReedSolomonCode.generate_random_message(solomon.k, solomon.m)
         message = ReedSolomonCode.array_to_binary(rand_message, solomon.m)
         encoded_message = solomon.encode_number(message)
@@ -39,6 +40,7 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
 
-solomon = ReedSolomonCode(4, 3)
-x = rs_stat_test(solomon, 4, 0)
+solomon = ReedSolomonCode(8, 8)
+solomon.print_general_info()
+x = rs_stat_test(solomon, 0, 14)
 print(x)

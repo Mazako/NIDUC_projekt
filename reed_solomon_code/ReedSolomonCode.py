@@ -271,6 +271,10 @@ class ReedSolomonCode:
                 delta_x = delta_star
             k += 1
             c_x.append(0)
+        delta_x = self.remove_leading_zeros_array(delta_x)
+        if len(delta_x) - 1 > self.t:
+            print("HA")
+            raise Exception
         return delta_x
 
     def __poly_multiply_by_scalar(self, polynomial, scalar):
@@ -403,5 +407,3 @@ class ReedSolomonCode:
         array = self.get_message_polynomial(message, encoding=False)
         array = self.add_errors(error_number, array, is_parity)
         return self.array_to_binary(array, self.m)
-
-
