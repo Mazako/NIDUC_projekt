@@ -3,7 +3,7 @@ import random
 
 from reed_solomon_code.GaloisFields import *
 
-
+N = 4
 # FIELDS:
 # __m - size of symbol in bits
 # __t - number of correctable symbols
@@ -11,6 +11,14 @@ from reed_solomon_code.GaloisFields import *
 # __k - message size in symbols
 # __table - table of galois field (16 or 256)
 # __generator - generator of code message
+
+
+def calculate_weight(param):
+    weight = 0
+    for i in param:
+        if i == '1':
+            weight += 1
+    return weight
 
 
 class ReedSolomonCode:
@@ -273,7 +281,6 @@ class ReedSolomonCode:
             c_x.append(0)
         delta_x = self.remove_leading_zeros_array(delta_x)
         if len(delta_x) - 1 > self.t:
-            print("HA")
             raise Exception
         return delta_x
 
@@ -407,3 +414,31 @@ class ReedSolomonCode:
         array = self.get_message_polynomial(message, encoding=False)
         array = self.add_errors(error_number, array, is_parity)
         return self.array_to_binary(array, self.m)
+
+    def simple_mochnacki_decoder(self, message):
+        i = 0
+        weight = 0
+        while True:
+            message_poly = self.get_message_polynomial(message, encoding=False)
+            syndrome_poly = self.__galois_division(message_poly, self.__generator)[1]
+            weight = calculate_weight(self.array_to_binary(syndrome_poly, self.m))
+            if weight <= self.t:
+                break
+            if i == self.k:
+                raise Exception
+            message = self.__shift_right(message)
+            message = self.add_missing_zeros(message, encoding=False)
+            i += 1
+        message_poly = self.__add_two_polynomials(message_poly, syndrome_poly)
+        message = self.array_to_binary(message_poly, self.m)
+        for j in range(i):
+            message = self.__shift_left(message)
+        return message
+
+    def __shift_right(self, message):
+        shifted = message[-N:] + message[:-N]
+        return shifted
+
+    def __shift_left(self, message):
+        shifted = message[N:] + message[:N]
+        return shifted
