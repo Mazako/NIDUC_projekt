@@ -421,6 +421,7 @@ class ReedSolomonCode:
         while True:
             message_poly = self.get_message_polynomial(message, encoding=False)
             syndrome_poly = self.__galois_division(message_poly, self.__generator)[1]
+            message = self.array_to_binary(message_poly, self.m)
             weight = calculate_weight(self.array_to_binary(syndrome_poly, self.m))
             if weight <= self.t:
                 break
@@ -433,7 +434,7 @@ class ReedSolomonCode:
         message = self.array_to_binary(message_poly, self.m)
         for j in range(i):
             message = self.__shift_left(message)
-        return message
+        return self.add_missing_zeros(message, encoding=False)
 
     def __shift_right(self, message):
         shifted = message[-N:] + message[:-N]
