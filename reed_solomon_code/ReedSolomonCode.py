@@ -423,7 +423,7 @@ class ReedSolomonCode:
             syndrome_poly = self.__galois_division(message_poly, self.__generator)[1]
             message = self.array_to_binary(message_poly, self.m)
             weight = calculate_weight(self.array_to_binary(syndrome_poly, self.m))
-            if weight <= self.t:
+            if weight <= self.t or weight == 0:
                 break
             if i == self.k:
                 raise Exception
