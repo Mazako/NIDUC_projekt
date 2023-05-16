@@ -35,8 +35,8 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
 
 solomon = ReedSolomonCode(4, 3)
 arr = []
-for i in range(4):
-    for j in range(4):
+for i in range(5):
+    for j in range(5):
         arr.append([i, j, rs_stat_test(solomon, i, j)])
 
 frame = pd.DataFrame(data=arr, columns=['błędy w wiadomości', 'błędy w części kontrolnej', 'sukces dekodowania [%]'])
