@@ -16,10 +16,9 @@ N = 4
 def calculate_weight(param):
     weight = 0
     for i in param:
-        if i == '1':
-            weight += 1
+      if i != 0:
+        weight += 1
     return weight
-
 
 class ReedSolomonCode:
     @staticmethod
@@ -61,7 +60,7 @@ class ReedSolomonCode:
         while i < len(string):
             result.append(int(string[i:i + offset], 2))
             i += 4
-        return ReedSolomonCode.remove_leading_zeros_array(result)
+        return result
 
     @staticmethod
     def generate_random_message(length, m):
@@ -419,22 +418,21 @@ class ReedSolomonCode:
         i = 0
         weight = 0
         while True:
-            message_poly = self.get_message_polynomial(message, encoding=False)
+            message_poly = self.binary_to_array(message, 4)
             syndrome_poly = self.__galois_division(message_poly, self.__generator)[1]
             message = self.array_to_binary(message_poly, self.m)
-            weight = calculate_weight(self.array_to_binary(syndrome_poly, self.m))
-            if weight <= self.t or weight == 0:
+            weight = calculate_weight(syndrome_poly)
+            if weight <= self.t:
                 break
-            if i == self.k:
+            if i == self.n:
                 raise Exception
             message = self.__shift_right(message)
-            message = self.add_missing_zeros(message, encoding=False)
             i += 1
         message_poly = self.__add_two_polynomials(message_poly, syndrome_poly)
         message = self.array_to_binary(message_poly, self.m)
         for j in range(i):
             message = self.__shift_left(message)
-        return self.add_missing_zeros(message, encoding=False)
+        return message
 
     def __shift_right(self, message):
         shifted = message[-N:] + message[:-N]
