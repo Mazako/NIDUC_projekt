@@ -21,6 +21,17 @@ def calculate_weight(param):
     return weight
 
 class ReedSolomonCode:
+
+    @staticmethod
+    def hamming_distance(w1, w2):
+        if len(w1) != len(w2):
+            raise Exception
+        distance = 0
+        for i in range(len(w1)):
+            if w1[i] != w2[i]:
+                distance += 1
+        return distance
+
     @staticmethod
     def add_galois(x, y):
         return x ^ y
