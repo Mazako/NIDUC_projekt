@@ -1,7 +1,9 @@
 import random
 
-from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 import pandas as pd
+
+from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
+
 
 def rs_stat_test(solomon, poly_errors, parity_errors, is_decoding_success):
     """
@@ -34,11 +36,12 @@ def rs_stat_test(solomon, poly_errors, parity_errors, is_decoding_success):
 arr = []
 solomon = ReedSolomonCode(8, 8)
 solomon.print_general_info()
-# for i in range(0, 9):
-#     for j in range(0, 9):
-#         if i + j > 8: continue
-#         print(i, j)
-#         arr.append([i, j, rs_stat_test(solomon, i, j, True), rs_stat_test(solomon, i, j, False)])
+for i in range(0, 9):
+    for j in range(0, 9):
+        if i + j > 8: continue
+        print(i, j)
+        arr.append([i, j, rs_stat_test(solomon, i, j, True), rs_stat_test(solomon, i, j, False),
+                    round(((i + j) / 255) * 100, 2)])
 rand_combinations = []
 i = 0
 while i < 30:
@@ -47,9 +50,11 @@ while i < 30:
     combination = (rand_message, rand_errors)
     if combination in rand_combinations:
         continue
-    arr.append([rand_message, rand_errors, rs_stat_test(solomon, rand_message, rand_errors, True), rs_stat_test(solomon, rand_message, rand_errors, False)])
+    arr.append([rand_message, rand_errors, rs_stat_test(solomon, rand_message, rand_errors, True),
+                rs_stat_test(solomon, rand_message, rand_errors, False),
+                round(((rand_message + rand_errors) / 255) * 100, 2)])
     print(i)
     i += 1
 
-frame = pd.DataFrame(data=arr, columns=['message', 'pairity', 'decoding', 'failure'])
+frame = pd.DataFrame(data=arr, columns=['message', 'pairity', 'decoding', 'failure', 'broken message(%)'])
 frame.to_csv('results2.csv', sep=';', encoding='utf-8')

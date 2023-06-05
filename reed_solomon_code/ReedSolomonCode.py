@@ -4,6 +4,8 @@ import random
 from reed_solomon_code.GaloisFields import *
 
 N = 4
+
+
 # FIELDS:
 # __m - size of symbol in bits
 # __t - number of correctable symbols
@@ -16,9 +18,10 @@ N = 4
 def calculate_weight(param):
     weight = 0
     for i in param:
-      if i != 0:
-        weight += 1
+        if i != 0:
+            weight += 1
     return weight
+
 
 class ReedSolomonCode:
 
@@ -150,7 +153,7 @@ class ReedSolomonCode:
             generator = self.__multiply_poly_galois(generator, [1, self.__table[i]])
         self.__generator = generator
 
-    def __multiply_galois(self, x, y):
+    def multiply_galois(self, x, y):
         x = int(x)
         y = int(y)
         if x == 0 or y == 0:
@@ -165,7 +168,7 @@ class ReedSolomonCode:
         solution = [0] * (a_len + b_len - 1)
         for i in range(a_len):
             for j in range(b_len):
-                solution[i + j] = ReedSolomonCode.add_galois(solution[i + j], self.__multiply_galois(a[i], b[j]))
+                solution[i + j] = ReedSolomonCode.add_galois(solution[i + j], self.multiply_galois(a[i], b[j]))
         return solution
 
     def __encode_message(self, message):
@@ -248,7 +251,7 @@ class ReedSolomonCode:
                 for j in range(1, len(divisor)):
                     if divisor[j] != 0:
                         result[i + j] = ReedSolomonCode.add_galois(result[i + j],
-                                                                   self.__multiply_galois(divisor[j], coef))
+                                                                   self.multiply_galois(divisor[j], coef))
 
         separator = -(len(divisor) - 1)
         return result[:separator], result[separator:]
@@ -257,7 +260,7 @@ class ReedSolomonCode:
         total = polynomial[len(polynomial) - 1]
         for i in range(1, len(polynomial)):
             poly_index = len(polynomial) - i - 1
-            total = self.add_galois(total, self.__multiply_galois(polynomial[poly_index], self.__galois_pow(value, i)))
+            total = self.add_galois(total, self.multiply_galois(polynomial[poly_index], self.__galois_pow(value, i)))
         return total
 
     def __galois_pow(self, value, i):
@@ -280,7 +283,7 @@ class ReedSolomonCode:
         while k <= 2 * self.t:
             e = syndromes[k - 1]
             for j in range(1, l + 1):
-                e = self.add_galois(e, self.__multiply_galois(delta_x[len(delta_x) - j - 1], syndromes[k - 1 - j]))
+                e = self.add_galois(e, self.multiply_galois(delta_x[len(delta_x) - j - 1], syndromes[k - 1 - j]))
             if e != 0:
                 delta_star = self.__add_two_polynomials(delta_x, self.__poly_multiply_by_scalar(c_x, e))
                 if 2 * l < k:
@@ -297,7 +300,7 @@ class ReedSolomonCode:
     def __poly_multiply_by_scalar(self, polynomial, scalar):
         multiplied = [0] * len(polynomial)
         for i in range(0, len(polynomial)):
-            multiplied[i] = self.__multiply_galois(polynomial[i], scalar)
+            multiplied[i] = self.multiply_galois(polynomial[i], scalar)
         return multiplied
 
     def __add_two_polynomials(self, p1, p2):
@@ -343,7 +346,7 @@ class ReedSolomonCode:
         for x in roots:
             magnitude = self.__calculate_polynomial(error_magnitude, x)
             d_x_locator = self.__delta_derivative(error_locator, x)
-            y = self.__multiply_galois(magnitude, self.__inverse_galois(d_x_locator))
+            y = self.multiply_galois(magnitude, self.__inverse_galois(d_x_locator))
             Y.append(y)
         return Y
 
@@ -357,8 +360,8 @@ class ReedSolomonCode:
         power = 2
         for i in range(3, len(error_locator_reversed)):
             if i % 2 != 0:
-                total = self.add_galois(total, self.__multiply_galois(error_locator_reversed[i],
-                                                                      self.__galois_pow(x, power)))
+                total = self.add_galois(total, self.multiply_galois(error_locator_reversed[i],
+                                                                    self.__galois_pow(x, power)))
                 power += 2
         if total == 0:
             raise Exception()

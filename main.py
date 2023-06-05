@@ -39,8 +39,8 @@ def rs_stat_test(solomon, poly_errors, parity_errors):
 
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
-
 solomon = ReedSolomonCode(8, 8)
-solomon.print_general_info()
-x = rs_stat_test(solomon, 0, 2)
-print(x)
+print(solomon.multiply_galois(5, 3))
+# solomon.print_general_info()
+# x = rs_stat_test(solomon, 0, 2)
+# print(x)
