@@ -8,9 +8,11 @@ def encode(encoder):
     """
     message = input('Wprowadzaj kolejne symbole oddzielone spacją: ')
     symbol_message = list(map(int, message.split(' ')))
-    result = encoder.encode_symbol_array_message(symbol_message)
-    print('Zakodowana wiadomość:', result)
-
+    try:
+        result = encoder.encode_symbol_array_message(symbol_message)
+        print('Zakodowana wiadomość:', result)
+    except Exception:
+        print('Wiadomosc jest niekodowalna')
 
 def decode(decoder):
     """
@@ -19,8 +21,11 @@ def decode(decoder):
     """
     message = input('Wprowadzaj kolejne symbole oddzielone spacją: ')
     symbol_message = list(map(int, message.split(' ')))
-    result = decoder.decode_message_array(symbol_message)
-    print('Odkodowania wiadomość:', result)
+    try:
+        result = decoder.decode_message_array(symbol_message)
+        print('Odkodowania wiadomość:', result)
+    except Exception:
+        print('Wiadomosc jest niekorygowalna')
 
 
 def createCoder():
