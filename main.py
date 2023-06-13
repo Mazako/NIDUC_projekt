@@ -1,46 +1,59 @@
-def rs_stat_test(solomon, poly_errors, parity_errors):
-    """
-
-    :type solomon: ReedSolomonCode
-    """
-    correct_probes = 0
-    decoded_but_good = 0
-    count = 10
-    for i in range(count):
-        print(i)
-        rand_message = ReedSolomonCode.generate_random_message(solomon.k, solomon.m)
-        message = ReedSolomonCode.array_to_binary(rand_message, solomon.m)
-        encoded_message = solomon.encode_number(message)
-        mesage_with_errors = solomon.add_errors_string(poly_errors, encoded_message, is_parity=False)
-        mesage_with_errors = solomon.add_errors_string(parity_errors, mesage_with_errors, is_parity=True)
-        try:
-            decoded_message = solomon.decode_number(mesage_with_errors)
-            if decoded_message == ReedSolomonCode.remove_leading_zeros(message):
-                correct_probes += 1
-            else:
-                decoded_but_good += 1
-
-        except:
-            continue
-    return correct_probes / count, decoded_but_good / count
-
-
-# solomon = ReedSolomonCode(4, 3)
-# message = [1, 2, 3, 4, 6, 7, 8, 9]
-# string = ReedSolomonCode.array_to_binary(message, 4)
-# string = ReedSolomonCode.remove_leading_zeros(string)
-# encoded_message = solomon.encode_number(string)
-# encoded_message_array = ReedSolomonCode.binary_to_array(encoded_message, 4)
-# encoded_message_array[0] = 4
-# encoded_message_array[1] = 4
-# encoded_message_array[2] = 4
-# decoded = solomon.decode_number(ReedSolomonCode.array_to_binary(encoded_message_array, 4))
-# print(string == decoded)
-
 from reed_solomon_code.ReedSolomonCode import ReedSolomonCode
 
-solomon = ReedSolomonCode(8, 8)
-print(solomon.multiply_galois(5, 3))
-# solomon.print_general_info()
-# x = rs_stat_test(solomon, 0, 2)
-# print(x)
+
+def encode(encoder):
+    """
+
+    :type encoder: ReedSolomonCode
+    """
+    message = input('Wprowadzaj kolejne symbole oddzielone spacją: ')
+    symbol_message = list(map(int, message.split(' ')))
+    result = encoder.encode_symbol_array_message(symbol_message)
+    print('Zakodowana wiadomość:', result)
+
+
+def decode(decoder):
+    """
+
+    :type decoder: ReedSolomonCode
+    """
+    message = input('Wprowadzaj kolejne symbole oddzielone spacją: ')
+    symbol_message = list(map(int, message.split(' ')))
+    result = decoder.decode_message_array(symbol_message)
+    print('Odkodowania wiadomość:', result)
+
+
+def createCoder():
+    mode = input('Wybierz tryb kodownaia: 4 / 8: ')
+    if mode != '4' and mode != '8':
+        print('Wybrano niewlaściwy tryb kodowania')
+        quit(-1)
+    t = input('Wybierz zdolnosc korekcyjną (t): ')
+    return ReedSolomonCode(int(mode), int(t))
+
+
+def main():
+    print('Dekoder Reed-Solomon')
+    solomon = createCoder()
+    program = True
+    while program:
+        print('================================')
+        solomon.print_general_info()
+        print('1) Zakoduj wiadomosc')
+        print('2) Odkoduj wiadomosc')
+        print('3) Zmien parametry kodu')
+        print('4) Wyjdz')
+        option = input('Wybierz: ')
+        if option == '1':
+            encode(solomon)
+        elif option == '2':
+            decode(solomon)
+        elif option == '3':
+            solomon = createCoder()
+        elif option == '4':
+            program = False
+        else:
+            print('Nie ma takiej opcji')
+
+
+main()

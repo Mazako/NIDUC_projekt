@@ -455,3 +455,71 @@ class ReedSolomonCode:
     def __shift_left(self, message):
         shifted = message[N:] + message[:N]
         return shifted
+
+    def encode_symbol_array_message(self, message):
+        if len(message) <= self.k:
+            return self.encode_array_number(message)
+        else:
+            count = int(math.ceil(len(message) / self.k))
+            non_full_message_len = len(message) % self.k
+            new_message = message.copy()
+            encoded_message = []
+            if non_full_message_len != 0:
+                new_message = [0] * (self.k - non_full_message_len) + new_message
+            for i in range(count):
+                encoded_message += self.encode_array_number(new_message[i * self.k: i * self.k + self.k])
+            return encoded_message
+
+    def decode_message_array(self, message):
+        if len(message) <= self.n:
+            return self.decode_array_number(message)
+        else:
+            count = int(math.ceil(len(message) / self.n))
+            non_full_message_len = len(message) % self.n
+            new_message = message.copy()
+            encoded_message = []
+            if non_full_message_len != 0:
+                new_message = [0] * (self.n - non_full_message_len) + new_message
+            for i in range(count):
+                encoded_message += self.decode_array_number(new_message[i * self.n: i * self.n + self.n])
+        return encoded_message
+
+    def encode_array_number(self, message):
+            # print('message in polynomial', message_polynomial)
+            parity_check = self.__calculate_pairity_check(message)
+            # print('parity: ', parity_check)
+            poly_encoded = message + parity_check
+            # print('polynomial mesage:', poly_encoded)
+            return poly_encoded
+
+    def decode_array_number(self, message):
+        syndromes = self.__calculate_syndrome_components(message)
+        # print('Polynomial: ', polynomial)
+        # print('Syndromes: ', syndromes)
+        if sum(syndromes) == 0:
+            return message
+        error_locator_polynomial = self.__berlekamps_massey(syndromes)
+        # print('delta: ', error_locator_polynomial)
+        magnitude = self.__calculate_error_magnitude(syndromes, error_locator_polynomial)
+        magnitude = ReedSolomonCode.remove_leading_zeros_array(magnitude)
+        # print('magnitude ', magnitude)
+
+        error_locations = self.__chein_search(error_locator_polynomial)
+        # print('roots: ', error_locations)
+        if len(error_locations) != len(error_locator_polynomial) - 1:
+            raise Exception
+        if len(error_locations) > self.t:
+            raise Exception
+
+        error_values = self.__forney_algorithm(magnitude, error_locator_polynomial, error_locations)
+        # print('error values: ', error_values)
+        error_indexes = list(map(lambda x: self.__table.index(self.__inverse_galois(x)), error_locations))
+        # print('error indexes: ', error_indexes)
+        self.__repair_message(message, error_values, error_indexes)
+        # print('repaired message: ', polynomial)
+        # print(self.__calculate_syndrome_components(polynomial))
+        if sum(self.__calculate_syndrome_components(message)) > 0:
+            raise Exception
+        message_length = len(message) - 2 * self.t
+        # print('SUCCESS')
+        return message
